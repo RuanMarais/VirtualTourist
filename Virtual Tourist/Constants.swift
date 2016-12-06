@@ -10,6 +10,10 @@ import Foundation
 
 struct Constants {
     
+    struct AppFunctionality {
+        static let AutosaveInterval = 60
+    }
+    
     // MARK: Flickr
     struct Flickr {
         static let APIScheme = "https"
