@@ -13,7 +13,7 @@ import CoreData
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-    let stack = CoreDataStack(modelName: "Model")!
+    let stack = CoreDataStack(modelName: "Virtual_Tourist")!
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         stack.autoSave(Constants.AppFunctionality.AutosaveInterval)
