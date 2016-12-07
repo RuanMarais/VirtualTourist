@@ -8,15 +8,13 @@
 
 import Foundation
 import CoreData
+import MapKit
 
 
-public class Pin: NSManagedObject {
+public class Pin: NSManagedObject, MKAnnotation {
 
     convenience init(latitude: Double, longitude: Double, context: NSManagedObjectContext) {
         
-        // An EntityDescription is an object that has access to all
-        // the information you provided in the Entity part of the model
-        // you need it to create an instance of this class.
         if let ent = NSEntityDescription.entity(forEntityName: "Pin", in: context) {
             self.init(entity: ent, insertInto: context)
             self.latitude = latitude
@@ -24,6 +22,10 @@ public class Pin: NSManagedObject {
         } else {
             fatalError("Unable to find Entity name!")
         }
+    }
+    
+    public var coordinate: CLLocationCoordinate2D {
+        return CLLocationCoordinate2D(latitude: self.latitude, longitude: self.longitude)
     }
 
 }

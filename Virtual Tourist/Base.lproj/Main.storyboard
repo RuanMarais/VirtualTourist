@@ -13,7 +13,7 @@
         <scene sceneID="SgA-u3-8em">
             <objects>
                 <navigationController id="sdT-6v-vhL" sceneMemberID="viewController">
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" misplaced="YES" id="Nqa-Is-rbK">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="Nqa-Is-rbK">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
@@ -75,7 +75,7 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Virtual Tourist" id="xxR-H3-pOw">
-                        <barButtonItem key="rightBarButtonItem" systemItem="edit" id="b3x-bf-V4A">
+                        <barButtonItem key="rightBarButtonItem" title="Edit" id="b3x-bf-V4A">
                             <connections>
                                 <action selector="editButtonPressed:" destination="h5G-se-3Z1" id="Zef-6X-y6v"/>
                             </connections>
