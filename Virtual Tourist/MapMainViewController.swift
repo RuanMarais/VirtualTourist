@@ -59,15 +59,18 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
     }
     
     func addAnnotation(gesture: UILongPressGestureRecognizer) {
-       
-        let location = gesture.location(in: mapView)
-        let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
+        if !deleteEnabled {
+            let location = gesture.location(in: mapView)
+            let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
         
-        let pin = Pin(latitude: Double(coordinate.latitude), longitude: Double(coordinate.longitude), context: stack.context)
+            let pin = Pin(latitude: Double(coordinate.latitude), longitude: Double(coordinate.longitude), context: stack.context)
+            FlickrClient.sharedInstance.flickrImageArrayLocationPopulate(pageNumber: 1, latitude: pin.latitude, longitude: pin.longitude){(results, error) in
+            
+            }
         
-        mapView.addAnnotation(pin)
-        stack.save()
-    
+            mapView.addAnnotation(pin)
+            stack.save()
+        }
     }
     
     func fetchPins() -> [Pin] {
@@ -104,14 +107,22 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
     }
     
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        let pin = view.annotation! as! Pin
         
         if !deleteEnabled {
-            performSegue(withIdentifier: "CollectionPresent", sender: self)
+            let fr: NSFetchRequest<NSFetchRequestResult> = CollectionPhoto.fetchRequest()
+            let pred = NSPredicate(format: "ownerPin = %@", argumentArray: [pin])
+            fr.predicate = pred
+            let fc = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
+            let collectionVC = self.storyboard!.instantiateViewController(withIdentifier: "Collection") as! CollectionAndMapViewController
+            collectionVC.pin = pin
+            collectionVC.fetchedResultsController = fc
+            self.navigationController!.pushViewController(collectionVC, animated: true)
         } else {
-            mapView.removeAnnotation(view.annotation!)
-            
+            mapView.removeAnnotation(pin)
+            stack.context.delete(pin)
+            stack.save()
         }
-        
     }
     
     func mapViewDidFailLoadingMap(_ mapView: MKMapView, withError error: Error) {

@@ -20,9 +20,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Override point for customization after application launch.
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + Double((Int64)(5 * NSEC_PER_SEC)) / Double(NSEC_PER_SEC)) {
             self.backgroundLoadPins()
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + Double((Int64)(5 * NSEC_PER_SEC)) / Double(NSEC_PER_SEC)) {
-                self.backgroundLoad()
-            }
         }
         return true
     }
@@ -46,12 +43,5 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
     }
     
-    func backgroundLoad() {
-        
-        stack.performBackgroundBatchOperation { (workerContext) in
-            
-        }
-    }
-
 }
 
