@@ -98,7 +98,6 @@ extension CoreDataCollectionController: NSFetchedResultsControllerDelegate {
                 case .delete:
                     self.collectionView?.deleteSections(set)
                 default:
-                    // irrelevant in our case
                     break
                 }
             }

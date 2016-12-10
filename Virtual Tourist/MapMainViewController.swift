@@ -19,6 +19,7 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
     var deleteEnabled = false
     var appDelegate: AppDelegate!
     var stack: CoreDataStack!
+    var gestureRecogniser: UILongPressGestureRecognizer!
    
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,7 +27,7 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
         appDelegate = UIApplication.shared.delegate as! AppDelegate
         stack = appDelegate.stack
         
-        let gestureRecogniser = UILongPressGestureRecognizer(target: self, action: #selector(addAnnotation(gesture:)))
+        gestureRecogniser = UILongPressGestureRecognizer(target: self, action: #selector(addAnnotation(gesture:)))
         mapView.addGestureRecognizer(gestureRecogniser)
         
         let pins = fetchPins()
@@ -60,14 +61,19 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
     
     func addAnnotation(gesture: UILongPressGestureRecognizer) {
         if !deleteEnabled {
+            gestureRecogniser.isEnabled = false
             let location = gesture.location(in: mapView)
             let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
         
             let pin = Pin(latitude: Double(coordinate.latitude), longitude: Double(coordinate.longitude), context: stack.context)
-            FlickrClient.sharedInstance.flickrImageArrayLocationPopulate(pageNumber: 1, latitude: pin.latitude, longitude: pin.longitude){(results, error) in
+            FlickrClient.sharedInstance.LoadPhotoCoreDataForPin(pageNumber: 1, pin: pin){(success, error) in
+                performUIUpdatesOnMain {
+                    if (success) {
+                        self.gestureRecogniser.isEnabled = true
+                    }
+                }
             
             }
-        
             mapView.addAnnotation(pin)
             stack.save()
         }
@@ -110,14 +116,18 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
         let pin = view.annotation! as! Pin
         
         if !deleteEnabled {
+            
             let fr: NSFetchRequest<NSFetchRequestResult> = CollectionPhoto.fetchRequest()
+            fr.sortDescriptors = [NSSortDescriptor(key: "name", ascending: false), NSSortDescriptor(key: "locationStringBbox", ascending: true), NSSortDescriptor(key: "url", ascending: false)]
             let pred = NSPredicate(format: "ownerPin = %@", argumentArray: [pin])
             fr.predicate = pred
             let fc = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
+            
             let collectionVC = self.storyboard!.instantiateViewController(withIdentifier: "Collection") as! CollectionAndMapViewController
             collectionVC.pin = pin
             collectionVC.fetchedResultsController = fc
             self.navigationController!.pushViewController(collectionVC, animated: true)
+ 
         } else {
             mapView.removeAnnotation(pin)
             stack.context.delete(pin)
@@ -128,6 +138,7 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
     func mapViewDidFailLoadingMap(_ mapView: MKMapView, withError error: Error) {
         //place alert controller here
     }
+    
     
 }
 

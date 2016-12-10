@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import UIKit
+import CoreData
 
 class FlickrClient: NSObject {
     
@@ -14,11 +16,16 @@ class FlickrClient: NSObject {
     
     static let sharedInstance = FlickrClient()
     let session = URLSession.shared
+    var appDelegate: AppDelegate!
+    var stack: CoreDataStack!
     
     // MARK: class initialiser
     
     override init() {
         super.init()
+        
+        appDelegate = UIApplication.shared.delegate as! AppDelegate
+        stack = appDelegate.stack
     }
     
     func taskForGETMethod(parameters: [String:AnyObject], completionHandlerForGET: @escaping (_ result: AnyObject?, _ error: NSError?) -> Void) {

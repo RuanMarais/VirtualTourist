@@ -54,4 +54,51 @@ extension FlickrClient {
             }
         }
     }
+    
+    func LoadPhotoCoreDataForPin(pageNumber: Int, pin: Pin, completionHandlerForLoadPhotoCoreDataForPin: @escaping (_ success: Bool, _ error: NSError?) -> Void) {
+        
+        let pinBbox = FlickrClient.sharedInstance.bboxString(latitude: pin.latitude, longitude: pin.longitude)
+        
+        flickrImageArrayLocationPopulate(pageNumber: pageNumber, latitude: pin.latitude, longitude: pin.longitude){(results, error) in
+            
+            func sendError(errorPhotos: String) {
+                let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
+                completionHandlerForLoadPhotoCoreDataForPin(false, NSError(domain: "LoadPhotoCoreData", code: 1, userInfo: userInfo))
+            }
+
+            guard (error == nil) else {
+                completionHandlerForLoadPhotoCoreDataForPin(false, error)
+                return
+            }
+            
+            guard let photosArray = results else {
+                completionHandlerForLoadPhotoCoreDataForPin(false, error)
+                return
+            }
+            
+            if photosArray.count == 0 {
+                sendError(errorPhotos: "no Photos found")
+                return
+            } else {
+                
+                    for index in 0...40 {
+                        
+                        let photoDictionary = photosArray[index]
+                        let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
+                        
+                        guard let imageUrlString = photoDictionary[Constants.FlickrResponseKeys.MediumURL] as? String else {
+                            continue
+                        }
+                        
+                        let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: self.stack.context)
+                        collectionPhoto.ownerPin = pin
+                        
+                    }
+
+                completionHandlerForLoadPhotoCoreDataForPin(true, nil)
+                
+            }
+
+        }
+    }
 }

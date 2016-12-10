@@ -18,8 +18,28 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
     @IBOutlet weak var collectionFlowLayout: UICollectionViewFlowLayout!
     var pin: Pin?
     
-    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+    }
+
     @IBAction func RefreshAndDelete(_ sender: Any) {
     }
     
+    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        
+        let collectionPhoto = fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
+        let collectionItem = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! CollectionViewCell
+        
+        let imageURL = URL(string: collectionPhoto.url!)
+        if let imageData = NSData(contentsOf: imageURL!) {
+            performUIUpdatesOnMain {
+                collectionItem.collectionImage.image = UIImage(data: imageData as Data)
+            }
+        } else {
+            
+        }
+        return collectionItem
+    }
+ 
 }
