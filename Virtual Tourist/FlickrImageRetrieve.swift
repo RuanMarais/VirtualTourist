@@ -81,7 +81,7 @@ extension FlickrClient {
                 return
             } else {
                 
-                    for index in 0...40 {
+                    for index in 0...38 {
                         
                         let photoDictionary = photosArray[index]
                         let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String

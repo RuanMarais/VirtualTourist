@@ -10,21 +10,23 @@ import Foundation
 import CoreData
 import UIKit
 
-class CoreDataCollectionController: UICollectionViewController {
+class CoreDataCollectionController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource {
+    
+    var collectionViewInView: UICollectionView?
     
     var fetchedResultsController : NSFetchedResultsController<NSFetchRequestResult>? {
         didSet {
             fetchedResultsController?.delegate = self
             executeSearch()
-            collectionView?.reloadData()
+            collectionViewInView?.reloadData()
         }
     }
     
     // MARK: Initializers
     
-    init(fetchedResultsController fc : NSFetchedResultsController<NSFetchRequestResult>, layout: UICollectionViewLayout) {
+    init(fetchedResultsController fc : NSFetchedResultsController<NSFetchRequestResult>, nibName: String?, bundle: Bundle?) {
         fetchedResultsController = fc
-        super.init(collectionViewLayout: layout)
+        super.init(nibName: nibName, bundle: bundle)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -36,7 +38,7 @@ class CoreDataCollectionController: UICollectionViewController {
 
 extension CoreDataCollectionController {
     
-    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         fatalError("This method MUST be implemented by a subclass of CoreDataCollectionController")
     }
 }
@@ -46,7 +48,7 @@ extension CoreDataCollectionController {
 extension CoreDataCollectionController {
     
     
-    override func numberOfSections(in collectionView: UICollectionView) -> Int {
+    @objc(numberOfSectionsInCollectionView:) func numberOfSections(in collectionView: UICollectionView) -> Int {
         if let fc = fetchedResultsController {
             return (fc.sections?.count)!
         } else {
@@ -55,7 +57,7 @@ extension CoreDataCollectionController {
 
     }
     
-    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if let fc = fetchedResultsController {
             return fc.sections![section].numberOfObjects
         } else {
@@ -86,7 +88,7 @@ extension CoreDataCollectionController {
 extension CoreDataCollectionController: NSFetchedResultsControllerDelegate {
     
     func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        collectionView?.performBatchUpdates({
+        collectionViewInView?.performBatchUpdates({
             
             func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
                 
@@ -94,9 +96,9 @@ extension CoreDataCollectionController: NSFetchedResultsControllerDelegate {
                 
                 switch (type) {
                 case .insert:
-                    self.collectionView?.insertSections(set)
+                    self.collectionViewInView?.insertSections(set)
                 case .delete:
-                    self.collectionView?.deleteSections(set)
+                    self.collectionViewInView?.deleteSections(set)
                 default:
                     break
                 }
@@ -106,14 +108,14 @@ extension CoreDataCollectionController: NSFetchedResultsControllerDelegate {
                 
                 switch(type) {
                 case .insert:
-                    self.collectionView?.insertItems(at: [newIndexPath!])
+                    self.collectionViewInView?.insertItems(at: [newIndexPath!])
                 case .delete:
-                    self.collectionView?.deleteItems(at: [indexPath!])
+                    self.collectionViewInView?.deleteItems(at: [indexPath!])
                 case .update:
-                    self.collectionView?.reloadItems(at: [indexPath!])
+                    self.collectionViewInView?.reloadItems(at: [indexPath!])
                 case .move:
-                    self.collectionView?.deleteItems(at: [indexPath!])
-                    self.collectionView?.insertItems(at: [newIndexPath!])
+                    self.collectionViewInView?.deleteItems(at: [indexPath!])
+                    self.collectionViewInView?.insertItems(at: [newIndexPath!])
                 }
             }
 

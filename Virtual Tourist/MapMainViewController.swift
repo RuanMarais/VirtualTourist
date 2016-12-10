@@ -70,6 +70,9 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
                 performUIUpdatesOnMain {
                     if (success) {
                         self.gestureRecogniser.isEnabled = true
+                    } else {
+                        //alertController here
+                        self.gestureRecogniser.isEnabled = true
                     }
                 }
             
@@ -125,6 +128,7 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
             
             let collectionVC = self.storyboard!.instantiateViewController(withIdentifier: "Collection") as! CollectionAndMapViewController
             collectionVC.pin = pin
+            
             collectionVC.fetchedResultsController = fc
             self.navigationController!.pushViewController(collectionVC, animated: true)
  
