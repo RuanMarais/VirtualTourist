@@ -45,7 +45,7 @@ struct Constants {
         static let SearchMethod = "flickr.photos.search"
         static let APIKey = "859d28b904138e9835bfd402aef0c2ea"
         static let ResponseFormat = "json"
-        static let DisableJSONCallback = "1" /* 1 means "yes" */
+        static let DisableJSONCallback = "1" 
         static let GalleryPhotosMethod = "flickr.galleries.getPhotos"
         static let GalleryID = "5704-72157622566655097"
         static let MediumURL = "url_m"

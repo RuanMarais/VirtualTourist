@@ -16,6 +16,7 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
     @IBOutlet weak var deleteLabel: UILabel!
     @IBOutlet weak var editButton: UIBarButtonItem!
     @IBOutlet weak var mapView: MKMapView!
+    
     var deleteEnabled = false
     var appDelegate: AppDelegate!
     var stack: CoreDataStack!
@@ -66,16 +67,15 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
             let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
         
             let pin = Pin(latitude: Double(coordinate.latitude), longitude: Double(coordinate.longitude), context: stack.context)
-            FlickrClient.sharedInstance.LoadPhotoCoreDataForPin(pageNumber: 1, pin: pin){(success, error) in
+            FlickrClient.sharedInstance.loadPhotoCoreDataForPin(replacePhotos: nil, pin: pin) {(success, error) in
                 performUIUpdatesOnMain {
-                    if (success) {
+                    if success {
                         self.gestureRecogniser.isEnabled = true
                     } else {
-                        //alertController here
+                        print(error?.userInfo[NSLocalizedDescriptionKey] as! String)
                         self.gestureRecogniser.isEnabled = true
                     }
                 }
-            
             }
             mapView.addAnnotation(pin)
             stack.save()
@@ -145,4 +145,6 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
     
     
 }
+
+
 

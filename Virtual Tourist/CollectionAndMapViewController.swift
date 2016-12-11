@@ -34,20 +34,21 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
     }
     
     
+    
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
         let collectionPhoto = fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
         let collectionItem = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! CollectionViewCell
-        collectionItem.loadingPicture.isHidden = true
+        collectionItem.loadingPicture.isHidden = false
+        collectionItem.loadingPicture.startAnimating()
         let imageURL = URL(string: collectionPhoto.url!)
         if let imageData = NSData(contentsOf: imageURL!) {
             performUIUpdatesOnMain {
                 collectionItem.collectionImage.image = UIImage(data: imageData as Data)
-                collectionItem.loadingPicture.isHidden = false 
+                collectionItem.loadingPicture.isHidden = true
+                collectionItem.loadingPicture.stopAnimating()
             }
-        } else {
-            
-        }
+        } 
         return collectionItem
     }
  
