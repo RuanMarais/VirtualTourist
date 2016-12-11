@@ -8,15 +8,32 @@
 
 import UIKit
 import CoreData
+import MapKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
     let stack = CoreDataStack(modelName: "Virtual_Tourist")!
+        
+    func checkIfFirstLaunch() {
+       
+        if UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
+            
+
+        } else {
+            
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+            UserDefaults.standard.synchronize()
+       }
+    }
+
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        
         stack.autoSave(Constants.AppFunctionality.AutosaveInterval)
+        checkIfFirstLaunch()
+        
         // Override point for customization after application launch.
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + Double((Int64)(5 * NSEC_PER_SEC)) / Double(NSEC_PER_SEC)) {
             self.backgroundLoadPins()

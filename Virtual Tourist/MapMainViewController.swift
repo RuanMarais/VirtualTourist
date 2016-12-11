@@ -36,7 +36,34 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
                 mapView.addAnnotations(pins)
             }
     }
-
+    
+    
+    override func viewWillAppear(_ animated: Bool) {
+       
+        if UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
+            
+            let coordinate = CLLocationCoordinate2D(latitude: UserDefaults.standard.double(forKey: "savedLatitude"), longitude: UserDefaults.standard.double(forKey: "savedLongitude"))
+            let span = MKCoordinateSpan(latitudeDelta: UserDefaults.standard.double(forKey: "savedLatitudeDelta"), longitudeDelta: UserDefaults.standard.double(forKey: "savedLongitudeDelta"))
+            
+            let region = MKCoordinateRegion(center: coordinate, span: span)
+            self.mapView.region = region
+            
+        }
+        
+    }
+    
+    func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+        let latitude = self.mapView.region.center.latitude as Double
+        let longitude = self.mapView.region.center.longitude as Double
+        let latitudeDelta = self.mapView.region.span.latitudeDelta as Double
+        let longitudeDelta = self.mapView.region.span.longitudeDelta as Double
+        UserDefaults.standard.set(latitude, forKey: "savedLatitude")
+        UserDefaults.standard.set(longitude, forKey: "savedLongitude")
+        UserDefaults.standard.set(latitudeDelta, forKey: "savedLatitudeDelta")
+        UserDefaults.standard.set(longitudeDelta, forKey: "savedLongitudeDelta")
+        UserDefaults.standard.synchronize()
+    }
+    
     @IBAction func editButtonPressed(_ sender: Any) {
         
         let height = deleteEnabledView.frame.size.height
