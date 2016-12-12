@@ -17,23 +17,60 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
     @IBOutlet weak var collectionRefreshAndDeleteButton: UIButton!
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var collectionFlowLayout: UICollectionViewFlowLayout!
+    
     var pin: Pin?
+    var deleteDictionary = [IndexPath: CollectionPhoto]()
+    var appDelegate: AppDelegate!
+    var stack: CoreDataStack!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         self.collectionViewInView = collectionView
+        
+        appDelegate = UIApplication.shared.delegate as! AppDelegate
+        stack = appDelegate.stack
+
         
         let space: CGFloat = 8.0
         let dimension = (min(view.frame.size.width, view.frame.size.height) - (2 * space)) / 3.0
         
         collectionFlowLayout.minimumInteritemSpacing = space
         collectionFlowLayout.itemSize = CGSize(width: dimension, height: dimension)
+        collectionView.allowsMultipleSelection = true
     }
 
     @IBAction func RefreshAndDelete(_ sender: Any) {
+        
+        if let context = fetchedResultsController?.managedObjectContext {
+            
+            if deleteDictionary.count != 0 {
+                
+                FlickrClient.sharedInstance.loadFlickrImagesInDeletedSpaces(pin: pin!, context: context, replacementItemsDictionary: deleteDictionary, collectionView: collectionView){(success, error) in
+                    performUIUpdatesOnMain {
+                        if success {
+                            print("donno how")
+                        }
+                    }
+                }
+                
+            }
+        }
     }
     
-    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        
+        let collectionPhoto = fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
+        deleteDictionary[indexPath] = collectionPhoto
+        collectionView.cellForItem(at: indexPath)?.contentView.alpha = 0.5
+        print(deleteDictionary.count)
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
+        deleteDictionary.removeValue(forKey: indexPath)
+        collectionView.cellForItem(at: indexPath)?.contentView.alpha = 1.0
+        print(deleteDictionary.count)
+    }
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
@@ -50,6 +87,6 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
             }
         } 
         return collectionItem
-    }
+        }
  
 }

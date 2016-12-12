@@ -32,6 +32,8 @@ class CoreDataCollectionController: UIViewController, UICollectionViewDelegate, 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
+    
+    
 }
 
 // MARK: - CoreDataCollectionController (Subclass Must Implement)
@@ -86,40 +88,44 @@ extension CoreDataCollectionController {
 // MARK: - CoreDataTableViewController: NSFetchedResultsControllerDelegate
 
 extension CoreDataCollectionController: NSFetchedResultsControllerDelegate {
-    
-    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        collectionViewInView?.performBatchUpdates({
-            
-            func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
+  
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange sectionInfo: NSFetchedResultsSectionInfo, atSectionIndex sectionIndex: Int, for type: NSFetchedResultsChangeType) {
+        print("called did change section")
+        let set = IndexSet(integer: sectionIndex)
                 
-                let set = IndexSet(integer: sectionIndex)
-                
-                switch (type) {
-                case .insert:
-                    self.collectionViewInView?.insertSections(set)
-                case .delete:
-                    self.collectionViewInView?.deleteSections(set)
-                default:
-                    break
-                }
-            }
-            
-            func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
-                
-                switch(type) {
-                case .insert:
-                    self.collectionViewInView?.insertItems(at: [newIndexPath!])
-                case .delete:
-                    self.collectionViewInView?.deleteItems(at: [indexPath!])
-                case .update:
-                    self.collectionViewInView?.reloadItems(at: [indexPath!])
-                case .move:
-                    self.collectionViewInView?.deleteItems(at: [indexPath!])
-                    self.collectionViewInView?.insertItems(at: [newIndexPath!])
-                }
-            }
-
-        }, completion: nil)
+            switch (type) {
+            case .insert:
+                self.collectionViewInView?.insertSections(set)
+            case .delete:
+                self.collectionViewInView?.deleteSections(set)
+            default:
+                break
+        }
     }
     
+        func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+                print("called did change object")
+            switch(type) {
+            case .insert:
+                self.collectionViewInView?.insertItems(at: [newIndexPath!])
+            case .delete:
+                self.collectionViewInView?.deleteItems(at: [indexPath!])
+            case .update:
+                self.collectionViewInView?.reloadItems(at: [indexPath!])
+            case .move:
+                self.collectionViewInView?.deleteItems(at: [indexPath!])
+                self.collectionViewInView?.insertItems(at: [newIndexPath!])
+        }
+    }
+    
+    
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        print("called did change content")
+        collectionViewInView?.performBatchUpdates(nil, completion: nil)
+    }
+  
 }
+
+
+    
+

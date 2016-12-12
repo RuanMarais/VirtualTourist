@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import CoreData
+import UIKit
 
 extension FlickrClient {
     
@@ -20,7 +22,7 @@ extension FlickrClient {
             
             func sendError(errorPhotos: String) {
                 let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
-                completionHandlerForMethodParameterOptimisation(nil, NSError(domain: "Retrieve Page Number", code: 1, userInfo: userInfo))
+                completionHandlerForMethodParameterOptimisation(nil, NSError(domain: "flickrMethodParameterOptimisation", code: 1, userInfo: userInfo))
             }
             
             guard (error == nil) else {
@@ -61,7 +63,7 @@ extension FlickrClient {
                 
                 func sendError(errorPhotos: String) {
                     let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
-                    completionHandlerForArray(nil, NSError(domain: "Retrieve Photo Array", code: 1, userInfo: userInfo))
+                    completionHandlerForArray(nil, NSError(domain: "flickrImageArrayLocationPopulate", code: 1, userInfo: userInfo))
                 }
                 
                 guard (error == nil) else {
@@ -85,17 +87,18 @@ extension FlickrClient {
                     return
                 }
                 
-                if photosArray.count == 0 {
+                guard (photosArray.count != 0) else {
                     sendError(errorPhotos: "PhotoArray Empty")
                     return
-                } else {
-                    completionHandlerForArray(photosArray, nil)
                 }
+                
+                completionHandlerForArray(photosArray, nil)
+                
             }
         }
     }
     
-    func loadPhotoCoreDataForPin(replacePhotos: Int?, pin: Pin, completionHandlerForLoadPhotoCoreDataForPin: @escaping (_ success: Bool, _ error: NSError?) -> Void) {
+    func loadPhotoCoreDataForPin(pin: Pin, completionHandlerForLoadPhotoCoreDataForPin: @escaping (_ success: Bool, _ error: NSError?) -> Void) {
         
         let pinBbox = FlickrClient.sharedInstance.bboxString(latitude: pin.latitude, longitude: pin.longitude)
         
@@ -103,7 +106,7 @@ extension FlickrClient {
             
             func sendError(errorPhotos: String) {
                 let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
-                completionHandlerForLoadPhotoCoreDataForPin(false, NSError(domain: "LoadPhotoCoreData", code: 1, userInfo: userInfo))
+                completionHandlerForLoadPhotoCoreDataForPin(false, NSError(domain: "LoadPhotoCoreDataForPin", code: 1, userInfo: userInfo))
             }
             
             guard (error == nil) else {
@@ -116,34 +119,82 @@ extension FlickrClient {
                 return
             }
             
-            if photosArray.count == 0 {
-                sendError(errorPhotos: "Photos array empty")
+            guard (photosArray.count != 0) else {
+                sendError(errorPhotos: "PhotoArray Empty")
                 return
+            }
                 
-            } else {
-                
-                var topIndex = min((photosArray.count - 1), 29)
-                if let replaceNumber = replacePhotos {
-                    topIndex = min((replaceNumber - 1), topIndex)
-                }
-                
-                for index in 0...topIndex {
+            let topIndex = min((photosArray.count - 1), 29)
+            
+            for index in 0...topIndex {
                         
-                    let photoDictionary = photosArray[index]
-                    let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
+                let photoDictionary = photosArray[index]
+                let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
                         
-                    guard let imageUrlString = photoDictionary[Constants.FlickrResponseKeys.MediumURL] as? String else {
+                guard let imageUrlString = photoDictionary[Constants.FlickrResponseKeys.MediumURL] as? String else {
                             continue
-                        }
-                        
-                    let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: self.stack.context)
-                        collectionPhoto.ownerPin = pin
                 }
-                
-                completionHandlerForLoadPhotoCoreDataForPin(true, nil)
+                        
+                let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: self.stack.context)
+                        collectionPhoto.ownerPin = pin
                 
             }
+            
+            self.stack.save()
+            completionHandlerForLoadPhotoCoreDataForPin(true, nil)
         }
     }
-
+    
+    func loadFlickrImagesInDeletedSpaces(pin: Pin, context: NSManagedObjectContext, replacementItemsDictionary: [IndexPath:CollectionPhoto], collectionView: UICollectionView, completionHandlerForLoadFlickrImagesInDeletedSpaces: @escaping (_ success: Bool, _ error: NSError?) -> Void) {
+        
+        let pinBbox = FlickrClient.sharedInstance.bboxString(latitude: pin.latitude, longitude: pin.longitude)
+        
+        flickrImageArrayLocationPopulate(latitude: pin.latitude, longitude: pin.longitude){(results, error) in
+            
+            func sendError(errorPhotos: String) {
+                let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
+                completionHandlerForLoadFlickrImagesInDeletedSpaces(false, NSError(domain: "LoadPhotoCoreDataForPin", code: 1, userInfo: userInfo))
+            }
+            
+            guard (error == nil) else {
+                sendError(errorPhotos: error?.userInfo[NSLocalizedDescriptionKey] as! String)
+                return
+            }
+            
+            guard let photosArray = results else {
+                sendError(errorPhotos: "Could not unwrap photosArray optional")
+                return
+            }
+            
+            guard (photosArray.count != 0) else {
+                sendError(errorPhotos: "PhotoArray Empty")
+                return
+            }
+            
+            for (index, photo) in replacementItemsDictionary {
+                
+                let randomPhotoIndex = Int(arc4random_uniform(UInt32(photosArray.count)))
+                let photoDictionary = photosArray[randomPhotoIndex] as [String: AnyObject]
+                let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
+                
+                
+                guard let imageUrlString = photoDictionary[Constants.FlickrResponseKeys.MediumURL] as? String else {
+                    sendError(errorPhotos: "Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photoDictionary)")
+                    continue
+                }
+                
+                context.delete(photo)
+                collectionView.deleteItems(at: [index])
+                
+                let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: context)
+                collectionPhoto.ownerPin = pin
+                collectionView.insertItems(at: [index])
+                
+                
+            }
+            
+        }
+        self.stack.save()
+        completionHandlerForLoadFlickrImagesInDeletedSpaces(true, nil)
+    }
 }
