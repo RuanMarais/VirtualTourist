@@ -171,7 +171,7 @@ extension FlickrClient {
                 return
             }
             
-            for (index, photo) in replacementItemsDictionary {
+            for (_, photo) in replacementItemsDictionary {
                 
                 let randomPhotoIndex = Int(arc4random_uniform(UInt32(photosArray.count)))
                 let photoDictionary = photosArray[randomPhotoIndex] as [String: AnyObject]
@@ -184,12 +184,9 @@ extension FlickrClient {
                 }
                 
                 context.delete(photo)
-                collectionView.deleteItems(at: [index])
                 
                 let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: context)
                 collectionPhoto.ownerPin = pin
-                collectionView.insertItems(at: [index])
-                
                 
             }
             

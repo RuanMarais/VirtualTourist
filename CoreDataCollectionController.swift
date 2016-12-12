@@ -13,6 +13,8 @@ import UIKit
 class CoreDataCollectionController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource {
     
     var collectionViewInView: UICollectionView?
+    var collectionViewUpdates = [NSFetchedResultsChangeType: [IndexPath]]()
+    var collectionViewMoves = [(IndexPath, IndexPath)]()
     
     var fetchedResultsController : NSFetchedResultsController<NSFetchRequestResult>? {
         didSet {
@@ -27,6 +29,8 @@ class CoreDataCollectionController: UIViewController, UICollectionViewDelegate, 
     init(fetchedResultsController fc : NSFetchedResultsController<NSFetchRequestResult>, nibName: String?, bundle: Bundle?) {
         fetchedResultsController = fc
         super.init(nibName: nibName, bundle: bundle)
+        collectionViewUpdates.removeAll()
+        collectionViewMoves.removeAll()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -104,24 +108,53 @@ extension CoreDataCollectionController: NSFetchedResultsControllerDelegate {
     }
     
         func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
-                print("called did change object")
+    
             switch(type) {
             case .insert:
-                self.collectionViewInView?.insertItems(at: [newIndexPath!])
+                self.collectionViewUpdates[.insert]?.append(newIndexPath!)
             case .delete:
-                self.collectionViewInView?.deleteItems(at: [indexPath!])
+                self.collectionViewUpdates[.delete]?.append(indexPath!)
             case .update:
-                self.collectionViewInView?.reloadItems(at: [indexPath!])
+                self.collectionViewUpdates[.update]?.append(indexPath!)
             case .move:
-                self.collectionViewInView?.deleteItems(at: [indexPath!])
-                self.collectionViewInView?.insertItems(at: [newIndexPath!])
+                self.collectionViewMoves.append((indexPath!, newIndexPath!))
         }
+    }
+    
+    func performCollectionViewUpdates() {
+        
+        for (changeType, value) in collectionViewUpdates {
+            
+            switch (changeType) {
+            case .delete:
+                collectionViewInView?.deleteItems(at: value)
+            case .insert:
+                collectionViewInView?.insertItems(at: value)
+            case .update:
+                collectionViewInView?.reloadItems(at: value)
+            default:
+                continue
+                
+            }
+            
+            for (valueOld, valueNew) in collectionViewMoves {
+                collectionViewInView?.moveItem(at: valueOld, to: valueNew)
+            }
+        }
+        
     }
     
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
         print("called did change content")
-        collectionViewInView?.performBatchUpdates(nil, completion: nil)
+        collectionViewInView?.performBatchUpdates({ 
+            self.performCollectionViewUpdates()
+        }, completion: { (completed) in
+            if completed {
+                self.collectionViewMoves.removeAll()
+                self.collectionViewUpdates.removeAll()
+            }
+        })
     }
   
 }

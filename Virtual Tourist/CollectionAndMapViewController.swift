@@ -50,6 +50,8 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
                     performUIUpdatesOnMain {
                         if success {
                             print("donno how")
+                            self.collectionView.reloadData()
+                            self.deleteDictionary.removeAll()
                         }
                     }
                 }
