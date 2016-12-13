@@ -95,7 +95,7 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
             let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
         
             let pin = Pin(latitude: Double(coordinate.latitude), longitude: Double(coordinate.longitude), context: stack.context)
-            FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin) {(success, error) in
+            FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin, context: self.stack.context, replacementNumber: nil){(success, error) in
                 performUIUpdatesOnMain {
                     if success {
                         self.UIEnabled(enabled: true)

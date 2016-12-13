@@ -98,7 +98,7 @@ extension FlickrClient {
         }
     }
     
-    func loadPhotoCoreDataForPin(pin: Pin, completionHandlerForLoadPhotoCoreDataForPin: @escaping (_ success: Bool, _ error: NSError?) -> Void) {
+    func loadPhotoCoreDataForPin(pin: Pin, context: NSManagedObjectContext, replacementNumber: Int?, completionHandlerForLoadPhotoCoreDataForPin: @escaping (_ success: Bool, _ error: NSError?) -> Void) {
         
         let pinBbox = FlickrClient.sharedInstance.bboxString(latitude: pin.latitude, longitude: pin.longitude)
         
@@ -124,7 +124,10 @@ extension FlickrClient {
                 return
             }
                 
-            let topIndex = min((photosArray.count - 1), 29)
+            var topIndex = min((photosArray.count - 1), 29)
+            if let numberToReplace = replacementNumber {
+                topIndex = min((numberToReplace - 1), topIndex)
+            }
             
             for index in 0...topIndex {
                         
@@ -135,63 +138,17 @@ extension FlickrClient {
                             continue
                 }
                         
-                let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: self.stack.context)
+                let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: context)
                         collectionPhoto.ownerPin = pin
                 
             }
             
-            self.stack.save()
+            do {
+                try context.save()
+            } catch {
+                fatalError("Error while saving main context: \(error)")
+            }
             completionHandlerForLoadPhotoCoreDataForPin(true, nil)
         }
-    }
-    
-    func loadFlickrImagesInDeletedSpaces(pin: Pin, context: NSManagedObjectContext, replacementItemsDictionary: [IndexPath:CollectionPhoto], collectionView: UICollectionView, completionHandlerForLoadFlickrImagesInDeletedSpaces: @escaping (_ success: Bool, _ error: NSError?) -> Void) {
-        
-        let pinBbox = FlickrClient.sharedInstance.bboxString(latitude: pin.latitude, longitude: pin.longitude)
-        
-        flickrImageArrayLocationPopulate(latitude: pin.latitude, longitude: pin.longitude){(results, error) in
-            
-            func sendError(errorPhotos: String) {
-                let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
-                completionHandlerForLoadFlickrImagesInDeletedSpaces(false, NSError(domain: "LoadPhotoCoreDataForPin", code: 1, userInfo: userInfo))
-            }
-            
-            guard (error == nil) else {
-                sendError(errorPhotos: error?.userInfo[NSLocalizedDescriptionKey] as! String)
-                return
-            }
-            
-            guard let photosArray = results else {
-                sendError(errorPhotos: "Could not unwrap photosArray optional")
-                return
-            }
-            
-            guard (photosArray.count != 0) else {
-                sendError(errorPhotos: "PhotoArray Empty")
-                return
-            }
-            
-            for (_, photo) in replacementItemsDictionary {
-                
-                let randomPhotoIndex = Int(arc4random_uniform(UInt32(photosArray.count)))
-                let photoDictionary = photosArray[randomPhotoIndex] as [String: AnyObject]
-                let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
-                
-                
-                guard let imageUrlString = photoDictionary[Constants.FlickrResponseKeys.MediumURL] as? String else {
-                    sendError(errorPhotos: "Cannot find key '\(Constants.FlickrResponseKeys.MediumURL)' in \(photoDictionary)")
-                    continue
-                }
-                
-                context.delete(photo)
-                
-                let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: context)
-                collectionPhoto.ownerPin = pin
-                
-            }
-            
-        }
-        self.stack.save()
-        completionHandlerForLoadFlickrImagesInDeletedSpaces(true, nil)
     }
 }
