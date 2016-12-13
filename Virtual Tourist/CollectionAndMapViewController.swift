@@ -38,6 +38,14 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
         collectionFlowLayout.itemSize = CGSize(width: dimension, height: dimension)
         collectionView.allowsMultipleSelection = true
         
+        mapView.addAnnotation(pin!)
+        setMapLocationToUserDefaults()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        if collectionView.numberOfItems(inSection: 0) == 0 {
+            
+        }
     }
 
     @IBAction func RefreshAndDelete(_ sender: Any) {
@@ -57,13 +65,31 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
             FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin!, context: context, replacementNumber: replaceAll){(success, error) in
                 performUIUpdatesOnMain {
                     if success {
-                        print("cool")
+                        
                     }
                 }
             }
         }
     }
     
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        
+        let reuseId = "pin"
+        
+        var pinView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseId) as? MKPinAnnotationView
+        
+        if pinView == nil {
+            pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: reuseId)
+            pinView!.canShowCallout = false
+            pinView!.pinTintColor = .red
+        }
+        else {
+            pinView!.annotation = annotation
+        }
+        
+        return pinView
+    }
+
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
         let collectionPhoto = fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
@@ -144,13 +170,10 @@ extension CollectionAndMapViewController: NSFetchedResultsControllerDelegate {
                 collectionView?.moveItem(at: valueOld, to: valueNew)
             }
         }
-        
     }
     
-    
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-        print("called did change content")
-        print(collectionViewUpdates)
+       
         self.collectionView?.performBatchUpdates({
             self.performCollectionViewUpdates()
         }, completion: { (completed) in
@@ -161,6 +184,17 @@ extension CollectionAndMapViewController: NSFetchedResultsControllerDelegate {
             }
         })
     }
+}
+
+extension CollectionAndMapViewController {
     
+    func setMapLocationToUserDefaults() {
+        let coordinate = CLLocationCoordinate2D(latitude: UserDefaults.standard.double(forKey: "savedLatitude"), longitude: UserDefaults.standard.double(forKey: "savedLongitude"))
+        let span = MKCoordinateSpan(latitudeDelta: UserDefaults.standard.double(forKey: "savedLatitudeDelta"), longitudeDelta: UserDefaults.standard.double(forKey: "savedLongitudeDelta"))
+        
+        let region = MKCoordinateRegion(center: coordinate, span: span)
+        self.mapView.region = region
+        
+    }
 
 }

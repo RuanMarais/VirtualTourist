@@ -14,7 +14,22 @@ struct Constants {
         static let AutosaveInterval = 60
     }
     
-    // MARK: Flickr
+    struct ErrorMessages {
+        static let emptyArray = "PhotoArray Empty"
+        static let flickrError = "Status response not OK"
+    }
+    
+    struct AlertMessages {
+        static let networkError = "There was a network error"
+        static let retryNetwork = "Please check your internet connection and retry"
+        static let noPhotosAtPin = "There are no photos at this location"
+        static let APIError = "There was a problem getting photos"
+        static let continuePinPlacementIfNoPhotos = "Continue placing pin without photos?"
+        static let accept = "Continue"
+        static let cancel = "Cancel"
+        static let OK = "OK"
+    }
+    
     struct Flickr {
         static let APIScheme = "https"
         static let APIHost = "api.flickr.com"
@@ -26,7 +41,6 @@ struct Constants {
         static let SearchLonRange = (-180.0, 180.0)
     }
     
-    // MARK: Flickr Parameter Keys
     struct FlickrParameterKeys {
         static let Method = "method"
         static let APIKey = "api_key"
@@ -40,10 +54,9 @@ struct Constants {
         static let Page = "page"
     }
     
-    // MARK: Flickr Parameter Values
     struct FlickrParameterValues {
         static let SearchMethod = "flickr.photos.search"
-        static let APIKey = "859d28b904138e9835bfd402aef0c2ea"
+        static let APIKey = "e7018f487fcc5eaca3171678cddd460a"
         static let ResponseFormat = "json"
         static let DisableJSONCallback = "1" 
         static let GalleryPhotosMethod = "flickr.galleries.getPhotos"
@@ -52,7 +65,6 @@ struct Constants {
         static let UseSafeSearch = "1"
     }
     
-    // MARK: Flickr Response Keys
     struct FlickrResponseKeys {
         static let Status = "stat"
         static let Photos = "photos"
@@ -63,7 +75,6 @@ struct Constants {
         static let Total = "total"
     }
     
-    // MARK: Flickr Response Values
     struct FlickrResponseValues {
         static let OKStatus = "ok"
     }

@@ -9,8 +9,6 @@
 import Foundation
 import CoreData
 
-// MARK: - CoreDataStack
-
 struct CoreDataStack {
     
     // MARK: Properties

@@ -14,16 +14,26 @@ extension FlickrClient {
     
     func flickrMethodParameterOptimisation(latitude: Double?, longitude: Double?, completionHandlerForMethodParameterOptimisation: @escaping (_ parameters: [String: AnyObject]?, _ error: NSError?) -> Void) {
         
+        func sendError(errorPhotos: String) {
+            let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
+            completionHandlerForMethodParameterOptimisation(nil, NSError(domain: "flickrMethodParameterOptimisation", code: 1, userInfo: userInfo))
+        }
+
         var methodParameters = self.methodBaseParameters
+        
+        guard let latitude = latitude else {
+            sendError(errorPhotos: "Couldnt retrieve location")
+            return
+        }
+        guard let longitude = longitude else {
+            sendError(errorPhotos: "Couldnt retrieve location")
+            return
+        }
+        
         let bBox = self.bboxString(latitude: latitude, longitude: longitude)
         methodParameters[Constants.FlickrParameterKeys.BoundingBox] = bBox as AnyObject?
         
         taskForGETMethod(parameters: methodParameters) {(results, error) in
-            
-            func sendError(errorPhotos: String) {
-                let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
-                completionHandlerForMethodParameterOptimisation(nil, NSError(domain: "flickrMethodParameterOptimisation", code: 1, userInfo: userInfo))
-            }
             
             guard (error == nil) else {
                 sendError(errorPhotos: error?.userInfo[NSLocalizedDescriptionKey] as! String)
@@ -56,21 +66,24 @@ extension FlickrClient {
 
     func flickrImageArrayLocationPopulate(latitude: Double?, longitude: Double?, completionHandlerForArray: @escaping (_ photoArray: [[String: AnyObject]]?, _ error: NSError?) -> Void) {
         
+        func sendError(errorPhotos: String) {
+            let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
+            completionHandlerForArray(nil, NSError(domain: "flickrImageArrayLocationPopulate", code: 1, userInfo: userInfo))
+        }
+
         self.flickrMethodParameterOptimisation(latitude: latitude, longitude: longitude){(parameters, error) in
             
+            guard (error == nil) else {
+                sendError(errorPhotos: error?.userInfo[NSLocalizedDescriptionKey] as! String)
+                return
+            }
+
             FlickrClient.sharedInstance.taskForGETMethod(parameters: parameters!){(results, error) in
-                
-                
-                func sendError(errorPhotos: String) {
-                    let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
-                    completionHandlerForArray(nil, NSError(domain: "flickrImageArrayLocationPopulate", code: 1, userInfo: userInfo))
-                }
                 
                 guard (error == nil) else {
                     sendError(errorPhotos: error?.userInfo[NSLocalizedDescriptionKey] as! String)
                     return
                 }
-
 
                 guard let stat = results?[Constants.FlickrResponseKeys.Status] as? String, stat == Constants.FlickrResponseValues.OKStatus else {
                     sendError(errorPhotos: "Status code not OK")

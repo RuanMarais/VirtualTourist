@@ -21,8 +21,6 @@ class CoreDataCollectionController: UIViewController, UICollectionViewDelegate, 
         }
     }
     
-    // MARK: Initializers
-    
     init(fetchedResultsController fc : NSFetchedResultsController<NSFetchRequestResult>, nibName: String?, bundle: Bundle?) {
         fetchedResultsController = fc
         super.init(nibName: nibName, bundle: bundle)
@@ -33,11 +31,7 @@ class CoreDataCollectionController: UIViewController, UICollectionViewDelegate, 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
-    
-    
 }
-
-// MARK: - CoreDataCollectionController (Subclass Must Implement)
 
 extension CoreDataCollectionController {
     
@@ -45,8 +39,6 @@ extension CoreDataCollectionController {
         fatalError("This method MUST be implemented by a subclass of CoreDataCollectionController")
     }
 }
-
-// MARK: -  Data Source
 
 extension CoreDataCollectionController {
     
@@ -57,7 +49,6 @@ extension CoreDataCollectionController {
         } else {
             return 0
         }
-
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -66,12 +57,8 @@ extension CoreDataCollectionController {
         } else {
             return 0
         }
-
     }
-    
 }
-
-// MARK: - CoreDataTableViewController (Fetches)
 
 extension CoreDataCollectionController {
     
