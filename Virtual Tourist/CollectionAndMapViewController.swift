@@ -230,18 +230,27 @@ extension CollectionAndMapViewController {
                 deleteDictionary.removeAll()
                 collectionRefreshAndDeleteButton.isEnabled = true
             } else {
-                for item in (pin?.pinPhotos)! {
-                    context.delete(item as! CollectionPhoto)
+                for cell in collectionView.visibleCells {
+                    let cell = cell as! CollectionViewCell
+                    cell.loadingPicture.isHidden = false
+                    cell.loadingPicture.startAnimating()
+                    cell.collectionImage.image = #imageLiteral(resourceName: "appIcon")
+                    cell.contentView.alpha = 0.5
                 }
                 FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin!, context: context, replacementNumber: nil) {(success, array, error) in
                     FlickrClient.sharedInstance.performUIUpdatesOnMain {
+                        
                         if success {
+                            for item in (self.pin?.pinPhotos)! {
+                                context.delete(item as! CollectionPhoto)
+                            }
                             self.populateCollectionPhotos(photosArray: array!, pin: self.pin!)
                             self.collectionRefreshAndDeleteButton.isEnabled = true
                         } else {
                             print(error?.userInfo[NSLocalizedDescriptionKey] as! String)
                             self.handleLoadPhotosError(error: error, pin: self.pin!)
                             self.collectionRefreshAndDeleteButton.isEnabled = true
+                            self.collectionView.reloadData()
                         }
 
                     }
