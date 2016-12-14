@@ -2,7 +2,7 @@
 //  CollectionPhoto+CoreDataProperties.swift
 //  Virtual Tourist
 //
-//  Created by Dr GJK Marais on 2016/12/05.
+//  Created by Dr GJK Marais on 2016/12/13.
 //  Copyright © 2016 RuanMarais. All rights reserved.
 //
 
@@ -17,8 +17,9 @@ extension CollectionPhoto {
     }
 
     @NSManaged public var locationStringBbox: String?
-    @NSManaged public var url: String?
     @NSManaged public var name: String?
+    @NSManaged public var url: String?
+    @NSManaged public var imageData: NSData?
     @NSManaged public var ownerPin: Pin?
 
 }

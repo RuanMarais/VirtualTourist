@@ -12,7 +12,7 @@ import CoreData
 
 public class CollectionPhoto: NSManagedObject {
     
-    convenience init(name: String, locationStringBbox: String, urlString: String,  context: NSManagedObjectContext) {
+    convenience init(name: String, locationStringBbox: String, urlString: String,  context: NSManagedObjectContext, data: NSData) {
         
         // An EntityDescription is an object that has access to all
         // the information you provided in the Entity part of the model
@@ -22,6 +22,7 @@ public class CollectionPhoto: NSManagedObject {
             self.name = name
             self.locationStringBbox = locationStringBbox
             self.url = urlString
+            self.imageData = data
         } else {
             fatalError("Unable to find Entity name!")
         }

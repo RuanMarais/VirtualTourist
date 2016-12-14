@@ -148,10 +148,14 @@ extension FlickrClient {
                 let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
                         
                 guard let imageUrlString = photoDictionary[Constants.FlickrResponseKeys.MediumURL] as? String else {
-                            continue
+                    continue
                 }
-                        
-                let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: context)
+                
+                guard let data = NSData(contentsOf: URL(string: imageUrlString)!) else {
+                    continue
+                }
+                
+                let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: context, data: data)
                         collectionPhoto.ownerPin = pin
                 
             }

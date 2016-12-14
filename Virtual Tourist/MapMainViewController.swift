@@ -60,7 +60,6 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
     
     
     override func viewWillAppear(_ animated: Bool) {
-       
         if UserDefaults.standard.bool(forKey: "MapViewHasChanged") {
             setMapLocationToUserDefaults()
         }
@@ -139,7 +138,7 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
         if !deleteEnabled {
             if UIEnabled {
             let fr: NSFetchRequest<NSFetchRequestResult> = CollectionPhoto.fetchRequest()
-            fr.sortDescriptors = [NSSortDescriptor(key: "name", ascending: false), NSSortDescriptor(key: "locationStringBbox", ascending: true), NSSortDescriptor(key: "url", ascending: false)]
+            fr.sortDescriptors = []
             let pred = NSPredicate(format: "ownerPin = %@", argumentArray: [pin])
             fr.predicate = pred
             let fc = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
