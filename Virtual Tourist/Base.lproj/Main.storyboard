@@ -134,7 +134,7 @@
                                                     <rect key="frame" x="0.0" y="0.0" width="120" height="120"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <subviews>
-                                                        <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="TFK-lN-H7d">
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="appIcon" translatesAutoresizingMaskIntoConstraints="NO" id="TFK-lN-H7d">
                                                             <rect key="frame" x="0.0" y="0.0" width="120" height="120"/>
                                                         </imageView>
                                                         <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="0oK-Lp-Ggi">
@@ -196,4 +196,7 @@
             <point key="canvasLocation" x="1440.8" y="180.35982008995504"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="appIcon" width="512" height="512"/>
+    </resources>
 </document>

@@ -111,7 +111,7 @@ extension FlickrClient {
         }
     }
     
-    func loadPhotoCoreDataForPin(pin: Pin, context: NSManagedObjectContext, replacementNumber: Int?, completionHandlerForLoadPhotoCoreDataForPin: @escaping (_ success: Bool, _ error: NSError?) -> Void) {
+    func loadPhotoCoreDataForPin(pin: Pin, context: NSManagedObjectContext, replacementNumber: Int?, completionHandlerForLoadPhotoCoreDataForPin: @escaping (_ success: Bool, _ pinPhotos: [[String: AnyObject?]]?, _ error: NSError?) -> Void) {
         
         let pinBbox = FlickrClient.sharedInstance.bboxString(latitude: pin.latitude, longitude: pin.longitude)
         
@@ -119,7 +119,7 @@ extension FlickrClient {
             
             func sendError(errorPhotos: String) {
                 let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
-                completionHandlerForLoadPhotoCoreDataForPin(false, NSError(domain: "LoadPhotoCoreDataForPin", code: 1, userInfo: userInfo))
+                completionHandlerForLoadPhotoCoreDataForPin(false, nil, NSError(domain: "LoadPhotoCoreDataForPin", code: 1, userInfo: userInfo))
             }
             
             guard (error == nil) else {
@@ -136,7 +136,8 @@ extension FlickrClient {
                 sendError(errorPhotos: "PhotoArray Empty")
                 return
             }
-                
+            
+            var collectionPhotoArray = [[String: AnyObject?]]()
             var topIndex = min((photosArray.count), 30)
             if let numberToReplace = replacementNumber {
                 topIndex = min((numberToReplace), topIndex)
@@ -144,10 +145,11 @@ extension FlickrClient {
             topIndex -= 1
             
             for index in 0...topIndex {
-                        
+                
+                var collectionPhotoDictionary = [String: AnyObject?]()
                 let photoDictionary = photosArray[index]
                 let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
-                        
+                
                 guard let imageUrlString = photoDictionary[Constants.FlickrResponseKeys.MediumURL] as? String else {
                     continue
                 }
@@ -156,17 +158,14 @@ extension FlickrClient {
                     continue
                 }
                 
-                let collectionPhoto = CollectionPhoto(name: photoTitle!, locationStringBbox: pinBbox, urlString: imageUrlString, context: context, data: data)
-                        collectionPhoto.ownerPin = pin
-                
+                collectionPhotoDictionary["name"] = photoTitle as AnyObject?
+                collectionPhotoDictionary["locationStringBbox"] = pinBbox as AnyObject?
+                collectionPhotoDictionary["urlString"] = imageUrlString as AnyObject?
+                collectionPhotoDictionary["data"] = data as AnyObject?
+                collectionPhotoArray.append(collectionPhotoDictionary)
             }
             
-            do {
-                try context.save()
-            } catch {
-                fatalError("Error while saving main context: \(error)")
-            }
-            completionHandlerForLoadPhotoCoreDataForPin(true, nil)
+            completionHandlerForLoadPhotoCoreDataForPin(true, collectionPhotoArray, nil)
         }
     }
 }

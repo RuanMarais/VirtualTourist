@@ -22,8 +22,8 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
     var deleteDictionary = [IndexPath: CollectionPhoto]()
     var appDelegate: AppDelegate!
     var stack: CoreDataStack!
-    var deletedBalance: Int = 0
     var reloadFromAlert: Bool = false
+    
     
     var alertNoPhotos: UIAlertController?
     var alertAPIStatus: UIAlertController?
@@ -35,7 +35,7 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
         appDelegate = UIApplication.shared.delegate as! AppDelegate
         stack = appDelegate.stack
         fetchedResultsController?.delegate = self
-        self.collectionView.reloadData()
+        collectionView.reloadData()
         
         let space: CGFloat = 8.0
         let dimension = (min(view.frame.size.width, view.frame.size.height) - (2 * space)) / 3.0
@@ -57,6 +57,7 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
             }
         let cancelRetrieve = UIAlertAction(title: Constants.AlertMessages.cancel, style: .cancel) {(parameter) in
                 self.dismiss(animated: true, completion: nil)
+                self.collectionRefreshAndDeleteButton.isEnabled = true
             }
         let networkError = UIAlertAction(title: Constants.AlertMessages.OK, style: .cancel)
             {(parameter) in
@@ -136,17 +137,14 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
         
         let collectionItem = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! CollectionViewCell
         collectionItem.loadingPicture.isHidden = false
-        collectionItem.contentView.backgroundColor = UIColor.gray
         collectionItem.loadingPicture.startAnimating()
         let collectionPhoto = fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
-        
         if let imageData = collectionPhoto.imageData {
-            FlickrClient.sharedInstance.performUIUpdatesOnMain {
+            
                 collectionItem.collectionImage.image = UIImage(data: imageData as Data)
-                collectionItem.contentView.backgroundColor = UIColor.white
                 collectionItem.loadingPicture.isHidden = true
                 collectionItem.loadingPicture.stopAnimating()
-            }
+            
         }
         if collectionItem.isSelected {
             collectionItem.contentView.alpha = 0.5
@@ -184,9 +182,6 @@ extension CollectionAndMapViewController: NSFetchedResultsControllerDelegate {
                 collectionView?.deleteItems(at: [value])
             case .insert:
                 collectionView?.insertItems(at: [value])
-                if !reloadFromAlert{
-                    deletedBalance -= 1
-                }
             case .update:
                 collectionView?.reloadItems(at: [value])
             default:
@@ -227,28 +222,30 @@ extension CollectionAndMapViewController {
     
     func updateCollectionContents() {
         
-        var replaceAll: Int? = nil
-        
         if let context = fetchedResultsController?.managedObjectContext {
             if deleteDictionary.count != 0 {
-                replaceAll = deleteDictionary.count
                 for (_, value) in deleteDictionary {
                     context.delete(value)
-                    deletedBalance += 1
                 }
+                deleteDictionary.removeAll()
+                collectionRefreshAndDeleteButton.isEnabled = true
             } else {
                 for item in (pin?.pinPhotos)! {
                     context.delete(item as! CollectionPhoto)
-                    deletedBalance += 1
                 }
-            }
-            
-            FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin!, context: context, replacementNumber: replaceAll){(success, error) in
-                FlickrClient.sharedInstance.performUIUpdatesOnMain {
-                    if (error != nil) {
-                        print(error?.userInfo[NSLocalizedDescriptionKey] as! String)
-                        self.handleLoadPhotosError(error: error, pin: self.pin!)
+                FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin!, context: context, replacementNumber: nil) {(success, array, error) in
+                    FlickrClient.sharedInstance.performUIUpdatesOnMain {
+                        if success {
+                            self.populateCollectionPhotos(photosArray: array!, pin: self.pin!)
+                            self.collectionRefreshAndDeleteButton.isEnabled = true
+                        } else {
+                            print(error?.userInfo[NSLocalizedDescriptionKey] as! String)
+                            self.handleLoadPhotosError(error: error, pin: self.pin!)
+                            self.collectionRefreshAndDeleteButton.isEnabled = true
+                        }
+
                     }
+                
                 }
             }
         }
@@ -274,12 +271,20 @@ extension CollectionAndMapViewController {
     func resetCollectionUI() {
         collectionViewMoves.removeAll()
         collectionViewUpdates.removeAll()
-        if deletedBalance == 0 {
-            if collectionView.indexPathsForSelectedItems?.count == 0 {
-                collectionRefreshAndDeleteButton.setTitle("New Collection", for: .normal)
-            }
-            collectionRefreshAndDeleteButton.isEnabled = true
+        if collectionView.indexPathsForSelectedItems?.count == 0 {
+            collectionRefreshAndDeleteButton.setTitle("New Collection", for: .normal)
         }
     }
-
 }
+
+extension CollectionAndMapViewController {
+    
+    func populateCollectionPhotos(photosArray: [[String: AnyObject?]], pin: Pin) {
+        for dictionary in photosArray {
+            let photo = CollectionPhoto(name: dictionary["name"] as? String, locationStringBbox: dictionary["locationStringBbox"] as? String, urlString: dictionary["urlString"] as? String, context: stack.context, data: dictionary["data"] as? NSData)
+            photo.ownerPin = pin
+        }
+        stack.save()
+    }
+}
+

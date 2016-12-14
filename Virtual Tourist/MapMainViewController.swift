@@ -88,10 +88,11 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
             if !(alertLoading?.isBeingPresented)! {
                 present(alertLoading!, animated: true, completion: nil)
             }
-            FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin, context: stack.context, replacementNumber: nil){(success, error) in
+            FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin, context: stack.context, replacementNumber: nil){(success, array, error) in
                 FlickrClient.sharedInstance.performUIUpdatesOnMain {
                     
                     if success {
+                        self.populateCollectionPhotos(photosArray: array!, pin: pin)
                         self.alertLoading!.dismiss(animated: true, completion: nil)
                         self.UIEnabled(enabled: true)
                     } else {
@@ -243,3 +244,15 @@ extension MapMainViewController {
         }
     }
 }
+
+extension MapMainViewController {
+    
+    func populateCollectionPhotos(photosArray: [[String: AnyObject?]], pin: Pin) {
+        for dictionary in photosArray {
+            let photo = CollectionPhoto(name: dictionary["name"] as? String, locationStringBbox: dictionary["locationStringBbox"] as? String, urlString: dictionary["urlString"] as? String, context: stack.context, data: dictionary["data"] as? NSData)
+            photo.ownerPin = pin
+        }
+        stack.save()
+    }
+}
+
