@@ -61,6 +61,7 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
         let networkError = UIAlertAction(title: Constants.AlertMessages.OK, style: .cancel)
             {(parameter) in
                 self.dismiss(animated: true, completion: nil)
+                self.collectionRefreshAndDeleteButton.isEnabled = true
             }
         
         alertNoPhotos?.addAction(noPinPhotosRetrieve)
@@ -76,12 +77,14 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
     }
     
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         if collectionView.numberOfItems(inSection: 0) == 0 {
             present(alertNoPhotos!, animated: true, completion: nil)
         }
+        deleteDictionary.removeAll()
     }
 
-    @IBAction func RefreshAndDelete(_ sender: Any) {
+    @IBAction func refreshAndDelete(_ sender: Any) {
         if collectionRefreshAndDeleteButton.isEnabled {
             collectionRefreshAndDeleteButton.isEnabled = false
             updateCollectionContents()
@@ -102,7 +105,6 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
         else {
             pinView!.annotation = annotation
         }
-        
         return pinView
     }
 
@@ -132,14 +134,16 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
-        let collectionPhoto = fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
         let collectionItem = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! CollectionViewCell
         collectionItem.loadingPicture.isHidden = false
+        collectionItem.contentView.backgroundColor = UIColor.gray
         collectionItem.loadingPicture.startAnimating()
+        let collectionPhoto = fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
         
         if let imageData = collectionPhoto.imageData {
-            performUIUpdatesOnMain {
+            FlickrClient.sharedInstance.performUIUpdatesOnMain {
                 collectionItem.collectionImage.image = UIImage(data: imageData as Data)
+                collectionItem.contentView.backgroundColor = UIColor.white
                 collectionItem.loadingPicture.isHidden = true
                 collectionItem.loadingPicture.stopAnimating()
             }
@@ -162,12 +166,12 @@ extension CollectionAndMapViewController: NSFetchedResultsControllerDelegate {
         switch(type) {
         case .insert, .update:
             let element = [type: newIndexPath]
-            self.collectionViewUpdates.append(element as! [NSFetchedResultsChangeType : IndexPath])
+            collectionViewUpdates.append(element as! [NSFetchedResultsChangeType : IndexPath])
         case .delete:
             let element = [type: indexPath]
-            self.collectionViewUpdates.append(element as! [NSFetchedResultsChangeType : IndexPath])
+            collectionViewUpdates.append(element as! [NSFetchedResultsChangeType : IndexPath])
         case .move:
-            self.collectionViewMoves.append((indexPath!, newIndexPath!))
+            collectionViewMoves.append((indexPath!, newIndexPath!))
         }
     }
     
@@ -181,7 +185,7 @@ extension CollectionAndMapViewController: NSFetchedResultsControllerDelegate {
             case .insert:
                 collectionView?.insertItems(at: [value])
                 if !reloadFromAlert{
-                    self.deletedBalance -= 1
+                    deletedBalance -= 1
                 }
             case .update:
                 collectionView?.reloadItems(at: [value])
@@ -199,7 +203,7 @@ extension CollectionAndMapViewController: NSFetchedResultsControllerDelegate {
     
     func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
        
-        self.collectionView?.performBatchUpdates({
+        collectionView?.performBatchUpdates({
             self.performCollectionViewUpdates()
         }, completion: { (completed) in
             if completed {
@@ -217,7 +221,7 @@ extension CollectionAndMapViewController {
         let span = MKCoordinateSpan(latitudeDelta: UserDefaults.standard.double(forKey: "savedLatitudeDelta"), longitudeDelta: UserDefaults.standard.double(forKey: "savedLongitudeDelta"))
         
         let region = MKCoordinateRegion(center: coordinate, span: span)
-        self.mapView.region = region
+        mapView.region = region
         
     }
     
@@ -228,7 +232,7 @@ extension CollectionAndMapViewController {
         if let context = fetchedResultsController?.managedObjectContext {
             if deleteDictionary.count != 0 {
                 replaceAll = deleteDictionary.count
-                for (_, value) in self.deleteDictionary {
+                for (_, value) in deleteDictionary {
                     context.delete(value)
                     deletedBalance += 1
                 }
@@ -240,7 +244,7 @@ extension CollectionAndMapViewController {
             }
             
             FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin!, context: context, replacementNumber: replaceAll){(success, error) in
-                performUIUpdatesOnMain {
+                FlickrClient.sharedInstance.performUIUpdatesOnMain {
                     if (error != nil) {
                         print(error?.userInfo[NSLocalizedDescriptionKey] as! String)
                         self.handleLoadPhotosError(error: error, pin: self.pin!)
@@ -254,27 +258,27 @@ extension CollectionAndMapViewController {
         
         if (error?.userInfo[NSLocalizedDescriptionKey] as! String) == Constants.ErrorMessages.emptyArray {
             if !(alertNoPhotos?.isBeingPresented)! {
-                self.present(self.alertNoPhotos!, animated: true, completion: nil)
+                present(alertNoPhotos!, animated: true, completion: nil)
             }
         } else if (error?.userInfo[NSLocalizedDescriptionKey] as! String) == Constants.ErrorMessages.flickrError {
             if !(alertAPIStatus?.isBeingPresented)! {
-                self.present(self.alertAPIStatus!, animated: true, completion: nil)
+                present(alertAPIStatus!, animated: true, completion: nil)
             }
         } else {
             if !(alertNetwork?.isBeingPresented)! {
-                self.present(self.alertNetwork!, animated: true, completion: nil)
+                present(alertNetwork!, animated: true, completion: nil)
             }
         }
     }
 
     func resetCollectionUI() {
-        self.collectionViewMoves.removeAll()
-        self.collectionViewUpdates.removeAll()
-        self.deleteDictionary.removeAll()
-        collectionRefreshAndDeleteButton.setTitle("New Collection", for: .normal)
-        
+        collectionViewMoves.removeAll()
+        collectionViewUpdates.removeAll()
         if deletedBalance == 0 {
-            self.collectionRefreshAndDeleteButton.isEnabled = true
+            if collectionView.indexPathsForSelectedItems?.count == 0 {
+                collectionRefreshAndDeleteButton.setTitle("New Collection", for: .normal)
+            }
+            collectionRefreshAndDeleteButton.isEnabled = true
         }
     }
 

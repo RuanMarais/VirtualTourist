@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 import CoreData
 
-class FlickrClient: NSObject {
+class FlickrClient {
     
     // MARK: Properties 
     
@@ -30,9 +30,7 @@ class FlickrClient: NSObject {
     
     // MARK: class initialiser
     
-    override init() {
-        super.init()
-        
+    init() {
         appDelegate = UIApplication.shared.delegate as! AppDelegate
         stack = appDelegate.stack
     }
@@ -124,4 +122,10 @@ class FlickrClient: NSObject {
         completionHandlerForConvertData(parsedResult as AnyObject!, nil)
     }
     
+}
+
+extension FlickrClient {
+    func performUIUpdatesOnMain(updates: @escaping () -> Void) {
+        DispatchQueue.main.async(execute: updates)
+    }
 }

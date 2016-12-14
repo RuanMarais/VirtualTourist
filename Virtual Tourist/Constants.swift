@@ -11,7 +11,7 @@ import Foundation
 struct Constants {
     
     struct AppFunctionality {
-        static let AutosaveInterval = 60
+        static let AutosaveInterval = 10
     }
     
     struct ErrorMessages {
@@ -29,6 +29,8 @@ struct Constants {
         static let accept = "Continue"
         static let cancel = "Cancel"
         static let OK = "OK"
+        static let loadingPins = "Loading"
+        static let retrieval = "Please wait, retrieving photos from Flickr"
     }
     
     struct Flickr {

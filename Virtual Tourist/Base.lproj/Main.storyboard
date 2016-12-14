@@ -170,7 +170,7 @@
                                         </constraints>
                                         <state key="normal" title="New Collection"/>
                                         <connections>
-                                            <action selector="RefreshAndDelete:" destination="B0B-4x-Vpe" eventType="touchUpInside" id="C3i-ts-OiH"/>
+                                            <action selector="refreshAndDelete:" destination="B0B-4x-Vpe" eventType="touchUpInside" id="V6M-rM-QLa"/>
                                         </connections>
                                     </button>
                                 </subviews>

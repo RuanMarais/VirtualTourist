@@ -137,10 +137,11 @@ extension FlickrClient {
                 return
             }
                 
-            var topIndex = min((photosArray.count - 1), 29)
+            var topIndex = min((photosArray.count), 30)
             if let numberToReplace = replacementNumber {
-                topIndex = min((numberToReplace - 1), topIndex)
+                topIndex = min((numberToReplace), topIndex)
             }
+            topIndex -= 1
             
             for index in 0...topIndex {
                         

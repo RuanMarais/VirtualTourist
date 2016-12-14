@@ -26,6 +26,7 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
     var alertNoPhotos: UIAlertController?
     var alertAPIStatus: UIAlertController?
     var alertNetwork: UIAlertController?
+    var alertLoading: UIAlertController?
    
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -39,6 +40,7 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
         alertAPIStatus = UIAlertController(title: Constants.AlertMessages.APIError, message: Constants.AlertMessages.continuePinPlacementIfNoPhotos , preferredStyle: .alert)
         alertNoPhotos = UIAlertController(title: Constants.AlertMessages.noPhotosAtPin, message: Constants.AlertMessages.continuePinPlacementIfNoPhotos , preferredStyle: .alert)
         alertNetwork = UIAlertController(title: Constants.AlertMessages.networkError, message: Constants.AlertMessages.retryNetwork, preferredStyle: .alert)
+        alertLoading = UIAlertController(title: Constants.AlertMessages.loadingPins, message: Constants.AlertMessages.retrieval, preferredStyle: .alert)
         
         let noPinPhotos = UIAlertAction(title: Constants.AlertMessages.OK, style: .cancel) {(parameter) in
             self.dismiss(animated: true, completion: nil)
@@ -58,8 +60,8 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
             }
     }
     
-    
     override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         if UserDefaults.standard.bool(forKey: "MapViewHasChanged") {
             setMapLocationToUserDefaults()
         }
@@ -82,12 +84,16 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
             let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
         
             let pin = Pin(latitude: Double(coordinate.latitude), longitude: Double(coordinate.longitude), context: stack.context)
-            FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin, context: self.stack.context, replacementNumber: nil){(success, error) in
-                performUIUpdatesOnMain {
+            mapView.addAnnotation(pin)
+            if !(alertLoading?.isBeingPresented)! {
+                present(alertLoading!, animated: true, completion: nil)
+            }
+            FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin, context: stack.context, replacementNumber: nil){(success, error) in
+                FlickrClient.sharedInstance.performUIUpdatesOnMain {
                     
                     if success {
+                        self.alertLoading!.dismiss(animated: true, completion: nil)
                         self.UIEnabled(enabled: true)
-                        self.mapView.addAnnotation(pin)
                     } else {
                         print(error?.userInfo[NSLocalizedDescriptionKey] as! String)
                         self.handleLoadPhotosError(error: error, pin: pin)
@@ -143,12 +149,12 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
             fr.predicate = pred
             let fc = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
             
-            self.setMapLocationToUserDefaults()
-            let collectionVC = self.storyboard!.instantiateViewController(withIdentifier: "Collection") as! CollectionAndMapViewController
+            setMapLocationToUserDefaults()
+            let collectionVC = storyboard!.instantiateViewController(withIdentifier: "Collection") as! CollectionAndMapViewController
             collectionVC.pin = pin
             
             collectionVC.fetchedResultsController = fc
-            self.navigationController!.pushViewController(collectionVC, animated: true)
+            navigationController!.pushViewController(collectionVC, animated: true)
             }
         } else {
             mapView.removeAnnotation(pin)
@@ -173,7 +179,7 @@ extension MapMainViewController {
             
             deleteEnabledView.isHidden = false
             deleteLabel.isHidden = false
-            self.mapView.frame.origin.y -= height
+            mapView.frame.origin.y -= height
             deleteEnabled = true
         } else {
             editButton.style = .plain
@@ -181,17 +187,17 @@ extension MapMainViewController {
             
             deleteEnabledView.isHidden = true
             deleteLabel.isHidden = true
-            self.mapView.frame.origin.y += height
+            mapView.frame.origin.y += height
             deleteEnabled = false
         }
-
     }
     
     func saveMapLocationToUserDefaults() {
-        let latitude = self.mapView.region.center.latitude as Double
-        let longitude = self.mapView.region.center.longitude as Double
-        let latitudeDelta = self.mapView.region.span.latitudeDelta as Double
-        let longitudeDelta = self.mapView.region.span.longitudeDelta as Double
+        let latitude = mapView.region.center.latitude as Double
+        let longitude = mapView.region.center.longitude as Double
+        let latitudeDelta = mapView.region.span.latitudeDelta as Double
+        let longitudeDelta = mapView.region.span.longitudeDelta as Double
+        
         UserDefaults.standard.set(latitude, forKey: "savedLatitude")
         UserDefaults.standard.set(longitude, forKey: "savedLongitude")
         UserDefaults.standard.set(latitudeDelta, forKey: "savedLatitudeDelta")
@@ -204,28 +210,36 @@ extension MapMainViewController {
         let span = MKCoordinateSpan(latitudeDelta: UserDefaults.standard.double(forKey: "savedLatitudeDelta"), longitudeDelta: UserDefaults.standard.double(forKey: "savedLongitudeDelta"))
         
         let region = MKCoordinateRegion(center: coordinate, span: span)
-        self.mapView.region = region
+        mapView.region = region
         
     }
     
     func handleLoadPhotosError(error: NSError?, pin: Pin) {
         
-    if (error?.userInfo[NSLocalizedDescriptionKey] as! String) == Constants.ErrorMessages.emptyArray {
-        if !(alertNoPhotos?.isBeingPresented)! {
-        self.present(self.alertNoPhotos!, animated: true, completion: nil)
-            self.mapView.addAnnotation(pin)
-        }
-    } else if (error?.userInfo[NSLocalizedDescriptionKey] as! String) == Constants.ErrorMessages.flickrError {
-        if !(alertAPIStatus?.isBeingPresented)! {
-            self.present(self.alertAPIStatus!, animated: true, completion: nil)
-            self.mapView.addAnnotation(pin)
-        }
-    } else {
-        if !(alertNetwork?.isBeingPresented)! {
-            self.present(self.alertNetwork!, animated: true, completion: nil)
-            self.mapView.addAnnotation(pin)
+        if (error?.userInfo[NSLocalizedDescriptionKey] as! String) == Constants.ErrorMessages.emptyArray {
+            if !(alertNoPhotos?.isBeingPresented)! {
+                if (alertLoading?.isBeingPresented)! {
+                    alertLoading?.dismiss(animated: true, completion: { 
+                        self.present(self.alertNoPhotos!, animated: true, completion: nil)
+                    })
+                }
+            }
+        } else if (error?.userInfo[NSLocalizedDescriptionKey] as! String) == Constants.ErrorMessages.flickrError {
+            if !(alertAPIStatus?.isBeingPresented)! {
+                if (alertLoading?.isBeingPresented)! {
+                    alertLoading?.dismiss(animated: true, completion: {
+                        self.present(self.alertAPIStatus!, animated: true, completion: nil)
+                    })
+                }
+            }
+        } else {
+            if !(alertNetwork?.isBeingPresented)! {
+                if (alertLoading?.isBeingPresented)! {
+                    alertLoading?.dismiss(animated: true, completion: {
+                        self.present(self.alertNetwork!, animated: true, completion: nil)
+                    })
+                }
             }
         }
     }
-    
 }
