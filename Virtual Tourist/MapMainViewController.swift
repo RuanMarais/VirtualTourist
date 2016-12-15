@@ -249,7 +249,12 @@ extension MapMainViewController {
     
     func populateCollectionPhotos(photosArray: [[String: AnyObject?]], pin: Pin) {
         for dictionary in photosArray {
-            let photo = CollectionPhoto(name: dictionary["name"] as? String, locationStringBbox: dictionary["locationStringBbox"] as? String, urlString: dictionary["urlString"] as? String, context: stack.context, data: dictionary["data"] as? NSData)
+            
+            guard let data = NSData(contentsOf: URL(string: (dictionary["urlString"] as? String)!)!) else {
+                continue
+            }
+
+            let photo = CollectionPhoto(name: dictionary["name"] as? String, locationStringBbox: dictionary["locationStringBbox"] as? String, urlString: dictionary["urlString"] as? String, context: stack.context, data: data)
             photo.ownerPin = pin
         }
         stack.save()

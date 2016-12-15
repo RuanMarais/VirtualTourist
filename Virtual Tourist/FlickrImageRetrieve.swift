@@ -154,14 +154,9 @@ extension FlickrClient {
                     continue
                 }
                 
-                guard let data = NSData(contentsOf: URL(string: imageUrlString)!) else {
-                    continue
-                }
-                
                 collectionPhotoDictionary["name"] = photoTitle as AnyObject?
                 collectionPhotoDictionary["locationStringBbox"] = pinBbox as AnyObject?
                 collectionPhotoDictionary["urlString"] = imageUrlString as AnyObject?
-                collectionPhotoDictionary["data"] = data as AnyObject?
                 collectionPhotoArray.append(collectionPhotoDictionary)
             }
             
