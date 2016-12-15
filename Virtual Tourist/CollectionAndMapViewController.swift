@@ -79,12 +79,12 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if collectionView.numberOfItems(inSection: 0) == 0 {
+        if pin?.pinPhotos?.count == 0 {
             present(alertNoPhotos!, animated: true, completion: nil)
         }
         deleteDictionary.removeAll()
     }
-
+    
     @IBAction func refreshAndDelete(_ sender: Any) {
         if collectionRefreshAndDeleteButton.isEnabled {
             collectionRefreshAndDeleteButton.isEnabled = false
@@ -111,7 +111,7 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
 
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
-        collectionRefreshAndDeleteButton.setTitle("Replace Selected Pictures", for: .normal)
+        collectionRefreshAndDeleteButton.setTitle("Remove Selected Pictures", for: .normal)
         collectionRefreshAndDeleteButton.titleLabel?.sizeToFit()
         
         let collectionPhoto = fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
@@ -138,14 +138,15 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
         let collectionItem = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) as! CollectionViewCell
         collectionItem.loadingPicture.isHidden = false
         collectionItem.loadingPicture.startAnimating()
+        collectionItem.collectionImage.image = #imageLiteral(resourceName: "appIcon")
+        
         let collectionPhoto = fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
         if let imageData = collectionPhoto.imageData {
-            
-                collectionItem.collectionImage.image = UIImage(data: imageData as Data)
-                collectionItem.loadingPicture.isHidden = true
-                collectionItem.loadingPicture.stopAnimating()
-            
+            collectionItem.collectionImage.image = UIImage(data: imageData as Data)
+            collectionItem.loadingPicture.isHidden = true
+            collectionItem.loadingPicture.stopAnimating()
         }
+
         if collectionItem.isSelected {
             collectionItem.contentView.alpha = 0.5
         } else {
@@ -230,13 +231,7 @@ extension CollectionAndMapViewController {
                 deleteDictionary.removeAll()
                 collectionRefreshAndDeleteButton.isEnabled = true
             } else {
-                for cell in collectionView.visibleCells {
-                    let cell = cell as! CollectionViewCell
-                    cell.loadingPicture.isHidden = false
-                    cell.loadingPicture.startAnimating()
-                    cell.collectionImage.image = #imageLiteral(resourceName: "appIcon")
-                    cell.contentView.alpha = 0.5
-                }
+                
                 FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin!, context: context, replacementNumber: nil) {(success, array, error) in
                     FlickrClient.sharedInstance.performUIUpdatesOnMain {
                         
@@ -252,9 +247,7 @@ extension CollectionAndMapViewController {
                             self.collectionRefreshAndDeleteButton.isEnabled = true
                             self.collectionView.reloadData()
                         }
-
                     }
-                
                 }
             }
         }
