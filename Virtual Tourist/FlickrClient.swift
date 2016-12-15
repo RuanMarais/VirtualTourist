@@ -128,4 +128,8 @@ extension FlickrClient {
     func performUIUpdatesOnMain(updates: @escaping () -> Void) {
         DispatchQueue.main.async(execute: updates)
     }
+    
+    func performDataUpdatesOnBackground(updates: @escaping () -> Void) {
+        DispatchQueue.global(qos: .background).async(execute: updates)
+    }
 }
