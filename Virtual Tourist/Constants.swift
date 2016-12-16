@@ -12,6 +12,7 @@ struct Constants {
     
     struct AppFunctionality {
         static let AutosaveInterval = 10
+        static let PhotoNumber = 29
     }
     
     struct ErrorMessages {

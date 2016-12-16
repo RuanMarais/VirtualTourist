@@ -82,9 +82,10 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
             UIEnabled(enabled: false)
             let location = gesture.location(in: mapView)
             let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
-        
+            
             let pin = Pin(latitude: Double(coordinate.latitude), longitude: Double(coordinate.longitude), context: stack.context)
             mapView.addAnnotation(pin)
+            
             if !(alertLoading?.isBeingPresented)! {
                 present(alertLoading!, animated: true, completion: nil)
             }
@@ -145,7 +146,7 @@ class MapMainViewController: UIViewController, MKMapViewDelegate {
         if !deleteEnabled {
             if UIEnabled {
             let fr: NSFetchRequest<NSFetchRequestResult> = CollectionPhoto.fetchRequest()
-            fr.sortDescriptors = []
+            fr.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
             let pred = NSPredicate(format: "ownerPin = %@", argumentArray: [pin])
             fr.predicate = pred
             let fc = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
@@ -250,11 +251,7 @@ extension MapMainViewController {
     func populateCollectionPhotos(photosArray: [[String: AnyObject?]], pin: Pin) {
         for dictionary in photosArray {
             
-            guard let data = NSData(contentsOf: URL(string: (dictionary["urlString"] as? String)!)!) else {
-                continue
-            }
-
-            let photo = CollectionPhoto(name: dictionary["name"] as? String, locationStringBbox: dictionary["locationStringBbox"] as? String, urlString: dictionary["urlString"] as? String, context: stack.context, data: data)
+            let photo = CollectionPhoto(name: dictionary["name"] as? String, locationStringBbox: dictionary["locationStringBbox"] as? String, urlString: dictionary["urlString"] as? String, context: stack.context, data: nil)
             photo.ownerPin = pin
         }
         stack.save()

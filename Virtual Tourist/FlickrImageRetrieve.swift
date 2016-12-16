@@ -163,4 +163,49 @@ extension FlickrClient {
             completionHandlerForLoadPhotoCoreDataForPin(true, collectionPhotoArray, nil)
         }
     }
+    
+    
+    func loadPhotoCoreDataSingle(pin: Pin, completionHandlerForLoadPhotoCoreDataSingle: @escaping (_ success: Bool, _ pinPhotos: [String: AnyObject?]?, _ error: NSError?) -> Void) {
+        
+        let pinBbox = FlickrClient.sharedInstance.bboxString(latitude: pin.latitude, longitude: pin.longitude)
+        
+        flickrImageArrayLocationPopulate(latitude: pin.latitude, longitude: pin.longitude){(results, error) in
+            
+            func sendError(errorPhotos: String) {
+                let userInfo = [NSLocalizedDescriptionKey : errorPhotos]
+                completionHandlerForLoadPhotoCoreDataSingle(false, nil, NSError(domain: "LoadPhotoCoreDataSingle", code: 1, userInfo: userInfo))
+            }
+            
+            guard (error == nil) else {
+                sendError(errorPhotos: error?.userInfo[NSLocalizedDescriptionKey] as! String)
+                return
+            }
+            
+            guard let photosArray = results else {
+                sendError(errorPhotos: "Could not unwrap photosArray optional")
+                return
+            }
+            
+            guard (photosArray.count != 0) else {
+                sendError(errorPhotos: "PhotoArray Empty")
+                return
+            }
+            
+            let randomPhotoIndex = Int(arc4random_uniform(UInt32(photosArray.count)))
+            let photoDictionary = photosArray[randomPhotoIndex] as [String: AnyObject]
+            var collectionPhotoDictionary = [String: AnyObject?]()
+            let photoTitle = photoDictionary[Constants.FlickrResponseKeys.Title] as? String
+            
+            guard let imageUrlString = photoDictionary[Constants.FlickrResponseKeys.MediumURL] as? String else {
+                sendError(errorPhotos: "no URL for Photo")
+                return
+            }
+                
+            collectionPhotoDictionary["name"] = photoTitle as AnyObject?
+            collectionPhotoDictionary["locationStringBbox"] = pinBbox as AnyObject?
+            collectionPhotoDictionary["urlString"] = imageUrlString as AnyObject?
+                
+            completionHandlerForLoadPhotoCoreDataSingle(true, collectionPhotoDictionary, nil)
+        }
+    }
 }

@@ -140,24 +140,37 @@ class CollectionAndMapViewController: CoreDataCollectionController, MKMapViewDel
         collectionItem.loadingPicture.startAnimating()
         collectionItem.collectionImage.image = #imageLiteral(resourceName: "appIcon")
         
-        FlickrClient.sharedInstance.performDataUpdatesOnBackground {
-            let collectionPhoto = self.fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
-            if let imageData = collectionPhoto.imageData {
-                FlickrClient.sharedInstance.performUIUpdatesOnMain {
-                    collectionItem.collectionImage.image = UIImage(data: imageData as Data)
-                    collectionItem.loadingPicture.isHidden = true
-                    collectionItem.loadingPicture.stopAnimating()
-                }
-            }
-        }
         if collectionItem.isSelected {
             collectionItem.contentView.alpha = 0.5
         } else {
             collectionItem.contentView.alpha = 1.0
         }
         
-        return collectionItem
+        FlickrClient.sharedInstance.performDataUpdatesOnBackground {
+            let collectionPhoto = self.fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
+            
+            if (collectionPhoto.imageData != nil) {
+                let imageData = collectionPhoto.imageData
+                FlickrClient.sharedInstance.performUIUpdatesOnMain {
+                    collectionItem.collectionImage.image = UIImage(data: imageData! as Data)
+                    collectionItem.loadingPicture.isHidden = true
+                    collectionItem.loadingPicture.stopAnimating()
+                }
+            
+            } else if (collectionPhoto.url != nil) {
+                let urlString = collectionPhoto.url
+                let imageData = NSData(contentsOf: URL(string: urlString!)!)
+                
+                FlickrClient.sharedInstance.performUIUpdatesOnMain {
+                    collectionItem.collectionImage.image = UIImage(data: imageData! as Data)
+                    collectionItem.loadingPicture.isHidden = true
+                    collectionItem.loadingPicture.stopAnimating()
+                }
+            }
         }
+        
+        return collectionItem
+    }
  
 }
 
@@ -234,17 +247,15 @@ extension CollectionAndMapViewController {
                 deleteDictionary.removeAll()
                 collectionRefreshAndDeleteButton.isEnabled = true
             } else {
-                for item in (self.pin?.pinPhotos)! {
-                    context.delete(item as! CollectionPhoto)
-                }
-                for _ in 0...29 {
-                    let photo = CollectionPhoto(name: nil, locationStringBbox: nil, urlString: nil, context: context, data: nil)
-                    photo.ownerPin = pin
-                }
+                
                 FlickrClient.sharedInstance.loadPhotoCoreDataForPin(pin: pin!, context: context, replacementNumber: nil) {(success, array, error) in
                     FlickrClient.sharedInstance.performUIUpdatesOnMain {
                         
                         if success {
+                            for item in (self.pin?.pinPhotos)! {
+                                context.delete(item as! CollectionPhoto)
+                            }
+                            
                             self.populateCollectionPhotos(photosArray: array!, pin: self.pin!)
                             self.collectionRefreshAndDeleteButton.isEnabled = true
                         } else {
@@ -288,33 +299,13 @@ extension CollectionAndMapViewController {
 extension CollectionAndMapViewController {
     
     func populateCollectionPhotos(photosArray: [[String: AnyObject?]], pin: Pin) {
-        FlickrClient.sharedInstance.performDataUpdatesOnBackground {
-            var index = 0
-            for dictionary in photosArray {
-                let indexPath = IndexPath(item: index, section: 0)
-                guard let data = NSData(contentsOf: URL(string: (dictionary["urlString"] as? String)!)!) else {
-                    continue
-                }
-                
-                let name = dictionary["name"] as? String
-                let bbox = dictionary["locationStringBbox"] as? String
-                let url = dictionary["urlString"] as? String
-                
-                let collectionPhoto = self.fetchedResultsController?.object(at: indexPath) as! CollectionPhoto
-                
-                collectionPhoto.imageData = data
-                collectionPhoto.name = name
-                collectionPhoto.url = url
-                collectionPhoto.locationStringBbox = bbox
-                FlickrClient.sharedInstance.performUIUpdatesOnMain {
-                    self.collectionView.reloadItems(at: [indexPath])
-                }
-                
-                index += 1
-            }
-            self.stack.save()
-        }
+    for dictionary in photosArray {
+        
+        let photo = CollectionPhoto(name: dictionary["name"] as? String, locationStringBbox: dictionary["locationStringBbox"] as? String, urlString: dictionary["urlString"] as? String, context: stack.context, data: nil)
+        photo.ownerPin = pin
     }
+    stack.save()
 }
 
+}
 
